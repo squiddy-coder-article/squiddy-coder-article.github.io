@@ -1,13 +1,114 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <style>
-      h1 {
-        font-family: "Comic Sans MS", cursive, sans-serif;
+<head>
+  <title>Chat with Sister 💬</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #fff);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #chat-container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-top: 0;
+    }
+    #messages {
+      height: 300px;
+      overflow-y: scroll;
+      border: 1px solid #ccc;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #f9f9f9;
+    }
+    .msg {
+      margin: 5px 0;
+      padding: 8px;
+      background: #e0f7fa;
+      border-radius: 5px;
+    }
+    .meta {
+      font-size: 0.8em;
+      color: #555;
+    }
+    #username {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 5px;
+    }
+    #messageInput {
+      width: 70%;
+      padding: 5px;
+    }
+    button {
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <h2>Chat with Sister 💬</h2>
+    <input type="text" id="username" placeholder="Enter your name">
+    <div id="messages"></div>
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    // 🔧 Replace with your Firebase config
+    var firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const db = firebase.database();
+    const messagesRef = db.ref("messages");
+
+    function sendMessage() {
+      const input = document.getElementById("messageInput");
+      const username = document.getElementById("username").value || "Anonymous";
+      const message = input.value.trim();
+      if (message !== "") {
+        const timestamp = new Date().toLocaleTimeString();
+        messagesRef.push().set({
+          user: username,
+          text: message,
+          time: timestamp
+        });
+        input.value = "";
       }
-    </style>
-  </head>
-  <body>
-    <h1 id="h1">lol! This is a blank page (for now) and is being built. See u soon!</h1>
-  </body>
+    }
+
+    messagesRef.on("child_added", function(snapshot) {
+      const data = snapshot.val();
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "msg";
+      msgDiv.innerHTML = `<strong>${data.user}</strong>: ${data.text}<div class="meta">${data.time}</div>`;
+      document.getElementById("messages").appendChild(msgDiv);
+      document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+    });
+  </script>
+</body>
 </html>
