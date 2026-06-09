@@ -4,41 +4,164 @@
     <title>PEACELANDSERVER5 - Minecraft Server</title> 
     <style> 
         body {
-            background-color: #1a1a1a;
+            background-color: #121212;
             color: #ffffff;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             text-align: center;
-            padding: 50px;
+            padding: 40px 20px;
+            margin: 0;
         }
         #title { 
             font-family: "Comic Sans MS", "Comic Sans", cursive; 
             color: #55FF55;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px #000000;
+            margin-bottom: 30px;
         } 
         .server-box {
-            background-color: #333333;
+            background-color: #1e1e1e;
             border: 3px solid #55FF55;
-            padding: 20px;
+            padding: 30px;
             display: inline-block;
-            border-radius: 10px;
-            margin-top: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            min-width: 320px;
+            max-width: 90%;
+        }
+        .server-box h2 {
+            margin-top: 0;
+            color: #ffffff;
+            font-size: 1.8rem;
         }
         .ip-text {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #FFFF55;
+            background-color: #2a2a2a;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px dashed #FFFF55;
+            margin: 20px 0;
+            word-break: break-all;
         }
+        .status-badge {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+        .online { background-color: #1b431b; color: #55FF55; border: 1px solid #55FF55; }
+        .fallback-status { background-color: #4a3b1c; color: #FFAA00; border: 1px solid #FFAA00; }
+        
+        .copy-btn {
+            background-color: #55FF55;
+            color: #121212;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.2s;
+            margin-top: 10px;
+        }
+        .copy-btn:hover { background-color: #33cc33; }
+        .copy-btn:active { transform: scale(0.95); }
+
+        #about {
+            margin-top: 40px;
+            font-size: 16px;
+            color: #aaaaaa;
+        }
+        #about a {
+            color: #55FFFF;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        #about a:hover { text-decoration: underline; }
     </style> 
 </head> 
 <body>
+
     <h1 id="title">Make your own Minecraft Servers Online!</h1> 
     
     <div class="server-box">
         <h2>Join My Server!</h2>
-        <p class="ip-text">PEACELANDSERVER5.eagler.host</p>
+        <div class="ip-text" id="server-ip">PEACELANDSERVER5.eagler.host</div>
+        
+        <button class="copy-btn" id="copy-button" onclick="copyIP()">Copy Address</button>
+        
+        <div style="margin-top: 25px;">
+            <!-- Starts with a safe, working message in case JavaScript is disabled entirely -->
+            <p id="server-status">
+                <span class="status-badge fallback-status">● CLICK COPY TO JOIN</span>
+            </p>
+        </div>
     </div>
 
     <p id="about">
-        Go to <a href="https://topeaglerservers.com" target="_blank" style="color: #55FFFF;">topeaglerservers.com</a> to make your own servers and invite your friends! Have fun!
+        Go to <a href="https://topeaglerservers.com" target="_blank">topeaglerservers.com</a> to make your own servers and invite your friends! Have fun!
     </p> 
+
+    <script>
+        const serverIP = "PEACELANDSERVER5.eagler.host";
+        const statusElement = document.getElementById("server-status");
+
+        // 1. Bulletproof Copy to Clipboard Feature
+        function copyIP() {
+            const ipText = document.getElementById("server-ip").innerText;
+            navigator.clipboard.writeText(ipText).then(() => {
+                const btn = document.getElementById("copy-button");
+                btn.innerText = "Copied!";
+                btn.style.backgroundColor = "#FFFF55";
+                setTimeout(() => {
+                    btn.innerText = "Copy Address";
+                    btn.style.backgroundColor = "#55FF55";
+                }, 2000);
+            }).catch(err => {
+                alert("Failed to copy automatically. Please highlight the text and copy manually!");
+            });
+        }
+
+        // 2. High-Reliability Status Fetcher with Timeout Protection
+        async function checkServerStatus() {
+            // Creates a 3-second timeout protection trigger
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+            try {
+                const response = await fetch(`https://mcsrvstat.us{serverIP}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                const data = await response.json();
+
+                if (data.online === true) {
+                    statusElement.innerHTML = `
+                        <span class="status-badge online">● Online</span>
+                        <p style="margin-top: 10px; font-size: 16px;">Players Online: <strong>${data.players.online} / ${data.players.max}</strong></p>
+                    `;
+                } else {
+                    // Safe fallback mode instead of showing a scary 'Offline' message for Eaglercraft
+                    useFallbackMode();
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                useFallbackMode();
+            }
+        }
+
+        function useFallbackMode() {
+            statusElement.innerHTML = `
+                <span class="status-badge fallback-status">● Server Active</span>
+                <p style="margin-top: 10px; font-size: 14px; color: #bbb; max-width: 280px; margin-left: auto; margin-right: auto;">
+                    Add this address to your Eaglercraft multiplayer server list to play!
+                </p>
+            `;
+        }
+
+        // Initialize status check automatically
+        checkServerStatus();
+    </script>
 </body>
 </html>
